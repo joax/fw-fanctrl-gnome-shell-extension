@@ -1,0 +1,8 @@
+{
+  "name": "fw-fanctrl",
+  "description": "Fan Control for Framework",
+  "uuid": "fw-fanctrl@ayuso.me",
+  "shell-version": [
+    "46"
+  ]
+}

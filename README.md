@@ -2,7 +2,7 @@
 Gnome Shell extension to manage fw-fanctrl - Framework Laptop Fan Control
 
 ## Requisites
-You need to have fw-fanctrl installed.
+You need to have [fw-fanctrl](https://github.com/TamtamHero/fw-fanctrl) installed.
 
 ## Manual Installation
 If you want to install this extension manually:

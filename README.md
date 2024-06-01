@@ -15,7 +15,7 @@ If you want to install this extension manually:
 
   `~/.local/share/gnome-shell/extensions/fw-fanctrl/`
 
-2. Now copy the content of this repository into the folder.
+2. Now copy the content of `src/` into the folder.
 3. Restart your gnome-shell session and you should see the icon on the taskbar.
 
 

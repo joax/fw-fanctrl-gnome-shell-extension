@@ -27,7 +27,6 @@ import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
-import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
 
 const MODES = [
     {
@@ -67,35 +66,30 @@ const MODES = [
     },
 ];
 
-let icon = new St.Icon({
-    icon_name: 'network-cellular-connected-symbolic',
-    style_class: 'system-status-icon',
-})
-
-let text = new St.Label({
-    text : "loading...",
-});
-
-let currentMode = null;
-
-let foundCommand = true;
-
 const Indicator = GObject.registerClass(
     class Indicator extends PanelMenu.Button {
+                
+        
         _init() {
             super._init(0.0, _('fw-fanctrl'));
-            
-            this.add_child(icon);
-            this.add_child(text);
+        
+            this.icon = new St.Icon({
+                icon_name: 'network-cellular-connected-symbolic',
+                style_class: 'system-status-icon',
+            })
+            this.currentMode = null;
+            this.foundCommand = true;    
+
+            this.add_child(this.icon);
             this.getFan()
 
             let menuSeparator = new PopupMenu.PopupSeparatorMenuItem('Fan Mode');
             this.menu.addMenuItem(menuSeparator);
 
             for (let mode in MODES) {
-                let item = new PopupMenu.PopupMenuItem(_('Mode ' + MODES[mode].name));
+                let item = new PopupMenu.PopupMenuItem(_('' + MODES[mode].name));
                 
-                if(MODES[mode].mode === currentMode.mode) {
+                if(MODES[mode].mode === this.currentMode.mode) {
                     item.setOrnament(PopupMenu.Ornament.CHECK);
                 } else {
                     item.setOrnament(PopupMenu.Ornament.NONE);
@@ -113,16 +107,15 @@ const Indicator = GObject.registerClass(
         }
 
         changeIconText() {
-            if(!foundCommand) {
+            if(!this.foundCommand) {
                 logError('fw-fanctrl is not installed')
                 Main.notify('Fan Speed not working', "You don't have fw-fanctrl installed!");
-                icon.icon_name = 'software-update-urgent-symbolic'
+                this.icon.icon_name = 'software-update-urgent-symbolic'
                 return false;
             }
 
-            if(currentMode) {
-                icon.icon_name = currentMode.icon
-                text.text = currentMode.name
+            if(this.currentMode) {
+                this.icon.icon_name = this.currentMode.icon
             }
         }
 
@@ -140,12 +133,13 @@ const Indicator = GObject.registerClass(
                 fanResult = fanResult.slice(0, -1);
                 for ( let i in MODES ) {
                     if(MODES[i].mode == fanResult) {
-                        currentMode = MODES[i];
+                        this.foundCommand = true;
+                        this.currentMode = MODES[i];
                         this.changeIconText();
                     }
                 }
             } catch (e) {
-                foundCommand = false;
+                this.foundCommand = false;
                 logError(e)
             }
         }

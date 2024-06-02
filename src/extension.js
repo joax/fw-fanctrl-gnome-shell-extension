@@ -69,10 +69,9 @@ const MODES = [
 const Indicator = GObject.registerClass(
     class Indicator extends PanelMenu.Button {
                 
-        
         _init() {
             super._init(0.0, _('fw-fanctrl'));
-        
+
             this.icon = new St.Icon({
                 icon_name: 'network-cellular-connected-symbolic',
                 style_class: 'system-status-icon',
@@ -82,7 +81,7 @@ const Indicator = GObject.registerClass(
 
             this.add_child(this.icon);
             this.getFan()
-
+            
             let menuSeparator = new PopupMenu.PopupSeparatorMenuItem('Fan Mode');
             this.menu.addMenuItem(menuSeparator);
 
@@ -99,10 +98,18 @@ const Indicator = GObject.registerClass(
                     this.menu.close();
                     this.setFan(MODES[mode].mode)
                     this.getFan()
+                    this.resetMenuItems(this.menu._getMenuItems());
+                    item.setOrnament(PopupMenu.Ornament.CHECK);
                     Main.notify('Fan Speed Changed', 'Fans set to ' + MODES[mode].name + ' mode.');
                 });
 
                 this.menu.addMenuItem(item);
+            };
+        }
+
+        resetMenuItems(menuItems) {
+            for (let i in menuItems) {
+                menuItems[i].setOrnament(PopupMenu.Ornament.NONE);
             };
         }
 

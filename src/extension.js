@@ -77,17 +77,11 @@ const Indicator = GObject.registerClass(
                 style_class: 'system-status-icon',
             })
 
-            this.statusLabel = new St.Label({
-                text: "--",
-                style_class: "cpufreq-label"
-            });
-
             this.currentMode = null;
             this.foundCommand = true;
             this.fanSpeed = 0;
 
             this.add_child(this.icon);
-            this.label = this.statusLabel;
             this.getFan();
             this.checkFanSpeed();
 
@@ -163,8 +157,8 @@ const Indicator = GObject.registerClass(
                 let fanResult = GLib.spawn_command_line_sync("pkexec ectool pwmgetfanrpm")[1].toString();
                 fanResult = fanResult.slice(0, -1);
                 fanResult = fanResult.split(" ");
-                this.fanSpeed = fanResult[3]
-                this.statusLabel.set_text(this.fanSpeed)
+                this.fanSpeed = fanResult[3];
+                this.label.text = this.fanSpeed;
             } catch (e) {
                 logError(e)
             }

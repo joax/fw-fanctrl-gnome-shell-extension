@@ -6,4 +6,5 @@
     "46"
   ],
   "gettext-domain": "fw-fanctrl@ayuso.me",
+  "settings-schema": "org.gnome.shell.extensions.fw-fanctrl"
 }

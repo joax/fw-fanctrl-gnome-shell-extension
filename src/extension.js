@@ -76,12 +76,25 @@ const Indicator = GObject.registerClass(
                 icon_name: 'network-cellular-connected-symbolic',
                 style_class: 'system-status-icon',
             })
+
+            this.statusLabel = new St.Label({
+                text: "--",
+                style_class: "cpufreq-label"
+            });
+
             this.currentMode = null;
-            this.foundCommand = true;    
+            this.foundCommand = true;
+            this.fanSpeed = 0;
 
             this.add_child(this.icon);
-            this.getFan()
-            
+            this.label = this.statusLabel;
+            this.getFan();
+            this.checkFanSpeed();
+
+            let fanSpeedItem = new PopupMenu.PopupImageMenuItem('loading...', 'weather-windy-symbolic', {});
+            fanSpeedItem.active = false;
+            this.menu.addMenuItem(fanSpeedItem);
+
             let menuSeparator = new PopupMenu.PopupSeparatorMenuItem('Fan Mode');
             this.menu.addMenuItem(menuSeparator);
 
@@ -105,6 +118,17 @@ const Indicator = GObject.registerClass(
 
                 this.menu.addMenuItem(item);
             };
+
+            // Update Fan Speed every 5 seconds
+            GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 5, () => {
+                this.checkFanSpeed();
+                this.updateFanSpeed(this.menu.firstMenuItem);
+                return GLib.SOURCE_CONTINUE;
+            });
+        }
+
+        updateFanSpeed(menuItem) {
+            menuItem.label.text = "Speed: " + this.fanSpeed + " rpm.";
         }
 
         resetMenuItems(menuItems) {
@@ -134,6 +158,18 @@ const Indicator = GObject.registerClass(
             }
         }
 
+        checkFanSpeed() {
+            try {
+                let fanResult = GLib.spawn_command_line_sync("pkexec ectool pwmgetfanrpm")[1].toString();
+                fanResult = fanResult.slice(0, -1);
+                fanResult = fanResult.split(" ");
+                this.fanSpeed = fanResult[3]
+                this.statusLabel.set_text(this.fanSpeed)
+            } catch (e) {
+                logError(e)
+            }
+        }
+
         getFan() {
             try {
                 let fanResult = GLib.spawn_command_line_sync("fw-fanctrl -q")[1].toString();
@@ -143,6 +179,7 @@ const Indicator = GObject.registerClass(
                         this.foundCommand = true;
                         this.currentMode = MODES[i];
                         this.changeIconText();
+                        this.checkFanSpeed();
                     }
                 }
             } catch (e) {

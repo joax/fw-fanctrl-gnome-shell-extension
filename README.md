@@ -18,4 +18,10 @@ If you want to install this extension manually:
 2. Now copy the content of `src/` into the folder.
 3. Restart your gnome-shell session and you should see the icon on the taskbar.
 
+### Policy Kit
 
+Given how `ectool` [works](https://www.reddit.com/r/framework/comments/yelsj2/fan_speed_reporting_in_linux/), we need sudo permissions to gather fan speed.
+
+In order to see the fan speed, you will need to grant admin permissions to the extension to use ectool.
+
+Copy the file in `src/actions/org.gnome.shell.extensions.fw-fanctrl.policy` into `/usr/share/polkit-1/actions/`. 

@@ -4,5 +4,6 @@
   "uuid": "fw-fanctrl@ayuso.me",
   "shell-version": [
     "46"
-  ]
+  ],
+  "gettext-domain": "fw-fanctrl@ayuso.me",
 }

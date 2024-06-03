@@ -208,7 +208,7 @@ export default class FrameworkFanControllerExtension extends Extension {
         getFan();
 
         // Update Fan Speed every 5 seconds
-        GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 5, () => {
+        this._sourceId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 5, () => {
             checkFanSpeed()
                 .then((fanSpeed) => {
                     this.fanSpeed = fanSpeed;
@@ -219,6 +219,11 @@ export default class FrameworkFanControllerExtension extends Extension {
     }
 
     disable() {
+        if (this._sourceId) {
+            GLib.Source.remove(this._sourceId);
+            this._sourceId = null;
+        }
+
         this._indicator.destroy();
         this._indicator = null;
     }

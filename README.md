@@ -24,4 +24,7 @@ Given how `ectool` [works](https://www.reddit.com/r/framework/comments/yelsj2/fa
 
 In order to see the fan speed, you will need to grant admin permissions to the extension to use ectool.
 
-Copy the file in `src/actions/org.gnome.shell.extensions.fw-fanctrl.policy` into `/usr/share/polkit-1/actions/`. 
+Copy the file in `actions/org.gnome.shell.extensions.fw-fanctrl.policy` into `/usr/share/polkit-1/actions/`.
+
+
+Note: This extension is not affiliated, funded, or in any way associated with Framework Computer.

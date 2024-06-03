@@ -56,12 +56,12 @@ const MODES = [
     {
         mode: "deaf",
         name: "Super Fan",
-        icon: 'network-cellular-signal-acquiring-symbolic',
+        icon: 'network-cellular-acquiring-symbolic',
     },
     {
         mode: "aeolus",
         name: "Take Off",
-        icon: 'mail-mark-junk-symbolic',
+        icon: 'weather-windy-symbolic',
     },
 ];
 

@@ -1,7 +1,8 @@
 {
   "name": "fw-fanctrl",
-  "description": "Fan Control for Framework",
+  "description": "Fan Control for Framework. This extension is not affiliated, funded, or in any way associated with Framework Computer.",
   "uuid": "fw-fanctrl@ayuso.me",
+  "url": "https://github.com/joax/fw-fanctrl-gnome-shell-extension",
   "shell-version": [
     "46"
   ],

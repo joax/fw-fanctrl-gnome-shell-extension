@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="fw-fanctrl">
+  <schema path="/org/gnome/shell/extensions/fw-fanctrl/" id="org.gnome.shell.extensions.fw-fanctrl">
+    <key type="i" name="refresh-seconds">
+        <default>5</default>
+        <summary>Refresh Period</summary>
+        <description>Seconds wait between refresh.</description>
+    </key>
+  </schema>
+</schemalist>

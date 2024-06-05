@@ -27,6 +27,8 @@ import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
+const schemaId = 'org.gnome.shell.extensions.fw-fanctrl';
+
 const MODES = [
     {
         mode: "laziest",
@@ -103,6 +105,8 @@ function execCommand(argv, input = null, cancellable = null) {
 }
 
 export default class FrameworkFanControllerExtension extends Extension {
+    
+    
     enable() {
         this.currentMode = null;
         this.foundCommand = true;
@@ -111,7 +115,11 @@ export default class FrameworkFanControllerExtension extends Extension {
         this._indicator = new Indicator();
         Main.panel.addToStatusArea(this.uuid, this._indicator);
     
-        let that = this;
+        // Refresh period
+        this._settings = this.getSettings(schemaId);
+        this.refreshSeconds = this._settings.get_int('refresh-seconds');
+
+        logError('Refresh Seconds: ' + this.refreshSeconds);
 
         let checkFanSpeed = async () => {
             try {
@@ -185,6 +193,14 @@ export default class FrameworkFanControllerExtension extends Extension {
 
                 this._indicator.menu.addMenuItem(item);
             };
+
+            // Open Settings
+            let openSettings = new PopupMenu.PopupMenuItem('Settings')
+            openSettings.connect('activate', () => {
+                this.openPreferences();
+            });
+
+            this._indicator.menu.addMenuItem(openSettings);
         }
 
         let getFan = async () => {
@@ -205,24 +221,49 @@ export default class FrameworkFanControllerExtension extends Extension {
             }
         }
 
-        getFan();
+        // Check configuration and reset loop if change detected
+        let configChange = () => {
+            let newRefreshSeconds = this._settings.get_int('refresh-seconds');
+            if(newRefreshSeconds != this.refreshSeconds) {
+                this.refreshSeconds = newRefreshSeconds;
+                startLoop();
+            }
+        }
 
-        // Update Fan Speed every 5 seconds
-        this._sourceId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 5, () => {
-            checkFanSpeed()
-                .then((fanSpeed) => {
-                    this.fanSpeed = fanSpeed;
-                    updateFanSpeed();
-                })
-            return GLib.SOURCE_CONTINUE;
-        });
+        // Run loop to get fan speed.
+        let startLoop = () => {
+            // Reset Loop.
+            this.stopLoop();
+    
+            // Update Fan Speed based on configuration value
+            this._sourceId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, this.refreshSeconds, () => {
+                checkFanSpeed()
+                    .then((fanSpeed) => {
+                        this.fanSpeed = fanSpeed;
+                        updateFanSpeed();
+                    })
+
+                // Reset Loop if config has changed.
+                configChange()
+                return GLib.SOURCE_CONTINUE;
+            });
+        }
+
+        // Initialize.
+        getFan();
+        startLoop();
     }
 
-    disable() {
+    stopLoop() {
+        // Reset Loop if there is one
         if (this._sourceId) {
             GLib.Source.remove(this._sourceId);
             this._sourceId = null;
         }
+    }
+
+    disable() {
+        this.stopLoop();
 
         this._indicator.destroy();
         this._indicator = null;

@@ -24,6 +24,7 @@ import GLib from 'gi://GLib';
 import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
@@ -143,7 +144,7 @@ export default class FrameworkFanControllerExtension extends Extension {
         let iconChange = () => {
             if(!this.foundCommand) {
                 logError('fw-fanctrl is not installed')
-                Main.notify('Fan Speed not working', "You don't have fw-fanctrl installed!");
+                sendNotification('Fan Speed not working', "You don't have fw-fanctrl installed!");
                 this._indicator.icon.icon_name = 'software-update-urgent-symbolic'
                 return false;
             }
@@ -151,6 +152,19 @@ export default class FrameworkFanControllerExtension extends Extension {
             if(this.currentMode) {
                 this._indicator.icon.icon_name = this.currentMode.icon
             }
+        }
+
+        let sendNotification = (content) => {
+            const systemSource = MessageTray.getSystemSource();
+            const notification = new MessageTray.Notification({
+                source: systemSource,
+                title: _('Framework Fan Control'),
+                body: _(content),
+                gicon: new Gio.ThemedIcon({name: 'emblem-generic'}),
+                iconName: 'emblem-generic',
+                urgency: MessageTray.Urgency.NORMAL,
+            });
+            systemSource.addNotification(notification);
         }
 
         let resetMenuItems = (menuItems) => {
@@ -188,7 +202,7 @@ export default class FrameworkFanControllerExtension extends Extension {
                     getFan()
                     resetMenuItems(this._indicator.menu._getMenuItems());
                     item.setOrnament(PopupMenu.Ornament.CHECK);
-                    Main.notify('Fan Speed Changed', 'Fans set to ' + MODES[mode].name + ' mode.');
+                    sendNotification('Fan Speed Changed', 'Fans set to ' + MODES[mode].name + ' mode.');
                 });
 
                 this._indicator.menu.addMenuItem(item);

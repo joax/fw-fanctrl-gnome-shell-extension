@@ -32,38 +32,38 @@ const schemaId = 'org.gnome.shell.extensions.fw-fanctrl';
 
 const MODES = [
     {
-        mode: "laziest",
-        name: "Super Quiet",
+        mode: 'laziest',
+        name: 'Super Quiet',
         icon: 'network-cellular-signal-none-symbolic',
     },
     {
-        mode: "lazy",
-        name: "Quiet",
+        mode: 'lazy',
+        name: 'Quiet',
         icon: 'network-cellular-signal-weak-symbolic',
     },
     {
-        mode: "medium",
-        name: "Normal",
+        mode: 'medium',
+        name: 'Normal',
         icon: 'network-cellular-signal-ok-symbolic',
     },
     {
-        mode: "agile",
-        name: "Somewhat noisy",
+        mode: 'agile',
+        name: 'Somewhat noisy',
         icon: 'network-cellular-signal-good-symbolic',
     },
     {
-        mode: "very-agile",
-        name: "Very Agile",
+        mode: 'very-agile',
+        name: 'Very Agile',
         icon: 'network-cellular-signal-excellent-symbolic',
     },
     {
-        mode: "deaf",
-        name: "Super Fan",
+        mode: 'deaf',
+        name: 'Super Fan',
         icon: 'network-cellular-acquiring-symbolic',
     },
     {
-        mode: "aeolus",
-        name: "Take Off",
+        mode: 'aeolus',
+        name: 'Take Off',
         icon: 'weather-windy-symbolic',
     },
 ];
@@ -76,11 +76,11 @@ const Indicator = GObject.registerClass(
             this.icon = new St.Icon({
                 icon_name: 'network-cellular-connected-symbolic',
                 style_class: 'system-status-icon',
-            })
+            });
 
             this.add_child(this.icon);
         }
-});
+    });
 
 function execCommand(argv, input = null, cancellable = null) {
     let flags = Gio.SubprocessFlags.STDOUT_PIPE;
@@ -88,16 +88,16 @@ function execCommand(argv, input = null, cancellable = null) {
     if (input !== null)
         flags |= Gio.SubprocessFlags.STDIN_PIPE;
 
-    let proc = new Gio.Subprocess({
-        argv: argv,
-        flags: flags
+    const proc = new Gio.Subprocess({
+        argv,
+        flags,
     });
     proc.init(cancellable);
 
     return new Promise((resolve, reject) => {
-        proc.communicate_utf8_async(input, cancellable, (proc, res) => {
+        proc.communicate_utf8_async(input, cancellable, (procReceived, res) => {
             try {
-                resolve(proc.communicate_utf8_finish(res)[1]);
+                resolve(procReceived.communicate_utf8_finish(res)[1]);
             } catch (e) {
                 reject(e);
             }
@@ -106,8 +106,6 @@ function execCommand(argv, input = null, cancellable = null) {
 }
 
 export default class FrameworkFanControllerExtension extends Extension {
-    
-    
     enable() {
         this.currentMode = null;
         this.foundCommand = true;
@@ -115,46 +113,48 @@ export default class FrameworkFanControllerExtension extends Extension {
 
         this._indicator = new Indicator();
         Main.panel.addToStatusArea(this.uuid, this._indicator);
-    
+
         // Refresh period
         this._settings = this.getSettings(schemaId);
         this.refreshSeconds = this._settings.get_int('refresh-seconds');
 
-        logError('Refresh Seconds: ' + this.refreshSeconds);
+        logError(`Refresh Seconds: ${this.refreshSeconds}`);
 
-        let checkFanSpeed = async () => {
+        const checkFanSpeed = async () => {
             try {
-                let fanSpeed = await execCommand(['pkexec', 'ectool' ,'pwmgetfanrpm']);
+                let fanSpeed = await execCommand(['pkexec', 'ectool', 'pwmgetfanrpm']);
                 fanSpeed = fanSpeed.slice(0, -1);
-                fanSpeed = fanSpeed.split(" ");
+                fanSpeed = fanSpeed.split(' ');
                 return fanSpeed[3];
             } catch (e) {
                 logError(e);
             }
-        }
+            return false;
+        };
 
-        let setFan = (modeString) => {
+        const setFan = modeString => {
             try {
-                const proc = Gio.Subprocess.new(['fw-fanctrl', modeString],Gio.SubprocessFlags.NONE);
+                Gio.Subprocess.new(['fw-fanctrl', modeString], Gio.SubprocessFlags.NONE);
             } catch (e) {
                 logError(e);
             }
-        }
+        };
 
-        let iconChange = () => {
-            if(!this.foundCommand) {
-                logError('fw-fanctrl is not installed')
+        const iconChange = () => {
+            if (!this.foundCommand) {
+                logError('fw-fanctrl is not installed');
                 sendNotification('Fan Speed not working', "You don't have fw-fanctrl installed!");
-                this._indicator.icon.icon_name = 'software-update-urgent-symbolic'
+                this._indicator.icon.icon_name = 'software-update-urgent-symbolic';
                 return false;
             }
 
-            if(this.currentMode) {
-                this._indicator.icon.icon_name = this.currentMode.icon
-            }
-        }
+            if (this.currentMode)
+                this._indicator.icon.icon_name = this.currentMode.icon;
 
-        let sendNotification = (content) => {
+            return true;
+        };
+
+        const sendNotification = content => {
             const systemSource = MessageTray.getSystemSource();
             const notification = new MessageTray.Notification({
                 source: systemSource,
@@ -165,103 +165,105 @@ export default class FrameworkFanControllerExtension extends Extension {
                 urgency: MessageTray.Urgency.NORMAL,
             });
             systemSource.addNotification(notification);
-        }
+        };
 
-        let resetMenuItems = (menuItems) => {
-            for (let i in menuItems) {
-                menuItems[i].setOrnament(PopupMenu.Ornament.NONE);
-            };
-        }
+        const resetMenuItems = menuItems => {
+            for (const key in menuItems) {
+                if (Object.hasOwn(menuItems, key))
+                    menuItems[key].setOrnament(PopupMenu.Ornament.NONE);
+            }
+        };
 
-        let updateFanSpeed = () => {
-            this._indicator.menu.firstMenuItem.label.text = "Speed: " + this.fanSpeed + " rpm.";
-        }
+        const updateFanSpeed = () => {
+            this._indicator.menu.firstMenuItem.label.text = `Speed: ${this.fanSpeed} rpm.`;
+        };
 
-        let setMenu = () => {
+        const setMenu = () => {
             this._indicator.menu.removeAll();
 
-            let fanSpeedItem = new PopupMenu.PopupImageMenuItem('loading...', 'weather-windy-symbolic', {});
+            const fanSpeedItem = new PopupMenu.PopupImageMenuItem('loading...', 'weather-windy-symbolic', {});
             fanSpeedItem.active = false;
             this._indicator.menu.addMenuItem(fanSpeedItem);
 
-            let menuSeparator = new PopupMenu.PopupSeparatorMenuItem('Fan Mode');
+            const menuSeparator = new PopupMenu.PopupSeparatorMenuItem('Fan Mode');
             this._indicator.menu.addMenuItem(menuSeparator);
 
-            for (let mode in MODES) {
-                let item = new PopupMenu.PopupMenuItem(_('' + MODES[mode].name));
-                
-                if(MODES[mode].mode === this.currentMode.mode) {
-                    item.setOrnament(PopupMenu.Ornament.CHECK);
-                } else {
-                    item.setOrnament(PopupMenu.Ornament.NONE);
+            for (const mode in MODES) {
+                if (Object.hasOwn(MODES, mode)) {
+                    const item = new PopupMenu.PopupMenuItem(_(`${MODES[mode].name}`));
+
+                    if (MODES[mode].mode === this.currentMode.mode)
+                        item.setOrnament(PopupMenu.Ornament.CHECK);
+                    else
+                        item.setOrnament(PopupMenu.Ornament.NONE);
+
+                    item.connect('activate', () => {
+                        this._indicator.menu.close();
+                        setFan(MODES[mode].mode);
+                        getFan();
+                        resetMenuItems(this._indicator.menu._getMenuItems());
+                        item.setOrnament(PopupMenu.Ornament.CHECK);
+                        sendNotification('Fan Speed Changed', `Fans set to ${MODES[mode].name} mode.`);
+                    });
+
+                    this._indicator.menu.addMenuItem(item);
                 }
-
-                item.connect('activate', () => {
-                    this._indicator.menu.close();
-                    setFan(MODES[mode].mode)
-                    getFan()
-                    resetMenuItems(this._indicator.menu._getMenuItems());
-                    item.setOrnament(PopupMenu.Ornament.CHECK);
-                    sendNotification('Fan Speed Changed', 'Fans set to ' + MODES[mode].name + ' mode.');
-                });
-
-                this._indicator.menu.addMenuItem(item);
-            };
+            }
 
             // Open Settings
-            let openSettings = new PopupMenu.PopupMenuItem('Settings')
+            const openSettings = new PopupMenu.PopupMenuItem('Settings');
             openSettings.connect('activate', () => {
                 this.openPreferences();
             });
 
             this._indicator.menu.addMenuItem(openSettings);
-        }
+        };
 
-        let getFan = async () => {
+        const getFan = async () => {
             try {
                 let fanResult = await execCommand(['fw-fanctrl', '-q']);
                 fanResult = fanResult.slice(0, -1);
-                for ( let i in MODES ) {
-                    if(MODES[i].mode == fanResult) {
+                for (const i in MODES) {
+                    if (MODES[i].mode === fanResult) {
                         this.foundCommand = true;
                         this.currentMode = MODES[i];
                         setMenu();
                         iconChange();
                     }
                 }
-            } catch(e) {
+            } catch (e) {
                 this.foundCommand = false;
                 logError(e);
             }
-        }
+        };
 
         // Check configuration and reset loop if change detected
-        let configChange = () => {
-            let newRefreshSeconds = this._settings.get_int('refresh-seconds');
-            if(newRefreshSeconds != this.refreshSeconds) {
+        const configChange = () => {
+            const newRefreshSeconds = this._settings.get_int('refresh-seconds');
+            if (newRefreshSeconds !== this.refreshSeconds) {
                 this.refreshSeconds = newRefreshSeconds;
                 startLoop();
             }
-        }
+        };
 
         // Run loop to get fan speed.
-        let startLoop = () => {
+        const startLoop = () => {
             // Reset Loop.
             this.stopLoop();
-    
+
             // Update Fan Speed based on configuration value
             this._sourceId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, this.refreshSeconds, () => {
                 checkFanSpeed()
-                    .then((fanSpeed) => {
+                    .then(fanSpeed => {
                         this.fanSpeed = fanSpeed;
                         updateFanSpeed();
-                    })
+                    });
 
                 // Reset Loop if config has changed.
-                configChange()
+                configChange();
                 return GLib.SOURCE_CONTINUE;
             });
-        }
+        };
 
         // Initialize.
         getFan();

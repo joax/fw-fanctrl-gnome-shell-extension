@@ -278,7 +278,7 @@ export default class FrameworkFanControllerExtension extends Extension {
 
     disable() {
         this.stopLoop();
-	this.settings = null;
+	this._settings = null;
         this._indicator.destroy();
         this._indicator = null;
     }

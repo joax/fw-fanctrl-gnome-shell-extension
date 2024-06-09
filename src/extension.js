@@ -28,8 +28,6 @@ import * as MessageTray from 'resource:///org/gnome/shell/ui/messageTray.js';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
-const schemaId = 'org.gnome.shell.extensions.fw-fanctrl';
-
 const MODES = [
     {
         mode: 'laziest',
@@ -115,7 +113,7 @@ export default class FrameworkFanControllerExtension extends Extension {
         Main.panel.addToStatusArea(this.uuid, this._indicator);
 
         // Refresh period
-        this._settings = this.getSettings(schemaId);
+        this._settings = this.getSettings();
         this.refreshSeconds = this._settings.get_int('refresh-seconds');
 
         logError(`Refresh Seconds: ${this.refreshSeconds}`);
@@ -280,7 +278,7 @@ export default class FrameworkFanControllerExtension extends Extension {
 
     disable() {
         this.stopLoop();
-
+	this.settings = null;
         this._indicator.destroy();
         this._indicator = null;
     }
